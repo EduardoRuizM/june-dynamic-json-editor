@@ -1,0 +1,21 @@
+{
+  "name": "JuNe Dynamic JSON Editor",
+  "version": "2.1.0",
+  "author": "Eduardo Ruiz <eruiz@dataclick.es> (https://www.dataclick.es)",
+  "description": "A dynamic, schema-driven JSON editor that builds interactive forms on the fly, validates data in real time, and adapts its structure and behavior based on user input",
+  "keywords": [
+    "json", "json editor", "schema json editor"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/EduardoRuizM/june-dynamic-json-editor",
+  "bugs": {
+    "url": "https://github.com/EduardoRuizM/june-dynamic-json-editor/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EduardoRuizM/june-dynamic-json-editor.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

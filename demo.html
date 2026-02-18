@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>JuNe Dynamic JSON Editor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="language" content="en">
+<meta name="robots" content="index, follow">
+<meta name="author" content="https://github.com/EduardoRuizM">
+<meta name="description" content="A dynamic, schema-driven JSON editor that builds interactive forms on the fly, validates data in real time, and adapts its structure and behavior based on user input.">
+<meta name="theme-color" content="#FEA700">
+<link rel="stylesheet" href="styles.css">
+<script src="june-dynamic-json-editor.js"></script>
+<style>
+textarea {
+	width: 100%;
+	min-width: 50vw;
+	font: .8rem Verdana;
+	resize: none;
+}
+</style>
+</head>
+
+<body>
+
+<div style="text-align: center">
+  <div style="display: inline-block; padding: 8px; text-align: left; vertical-align: top">
+    <p>
+      <a href="https://github.com/EduardoRuizM/june-dynamic-json-editor"><img src="logo.png" title="JuNe Dynamic JSON Editor" width="180"></a>
+    </p>
+    <div id="editor"></div>
+    <pre id="output"></pre>
+  </div>
+
+  <div style="display: inline-block; padding: 8px; vertical-align: top">
+    <p><b>JSON Schema</b></p>
+    <textarea id="json_schema" rows="10"></textarea><div><small>Functions are wrapped with &quot;<- ... ->&quot; to prevent missing functions when using JSON.stringify, not necessary in real source code</small></div>
+
+    <p><b>JSON Data</b></p>
+    <textarea id="json_data" rows="8"></textarea>
+
+    <p><b>JSON Output</b></p>
+    <textarea id="json_output" rows="8" readonly></textarea>
+    <br><br>
+
+    <button onclick="json_create()" class="jstree-button" style="width: 30%">⭮ Update Form</button> &nbsp;
+    <button onclick="json_update()" class="jstree-button" style="width: 30%">⭯ Update Output</button>
+  </div>
+</div>
+
+<script>
+const schema = [
+  { type: 'string', key: 'mytext', text: 'Free text' },
+  { type: 'string', key: 'othertext', text: 'Other text', attrs: { maxlength: 20 } },
+  { type: 'enum', key: 'dynamic', text: 'Dynamic', values: [ 'String', 'Fixed' ], value: 'String' },
+  { type: 'string', key: 'dynamicfield', text: 'Dynamic Field',
+    depends_on: {
+      key: 'dynamic', set: {type: "<-value => value === 'Fixed' ? 'fixed' : 'string'->", value: 'myFixed' }
+    }
+  },
+  { type: 'int', key: 'intnumber', text: 'Integer' },
+  { type: 'int', key: 'intunsigned', text: 'Integer unsigned', attrs: { min: 0 } },
+  { type: 'float', key: 'floatnumber', text: 'Float' },
+  { type: 'string', key: 'datevalue', text: 'Date', attrs: { type: 'date' } },
+  { type: 'fixed', key: 'fixedvalue', text: 'Fixed value', value: 12 },
+  { type: 'bool', key: 'booleanvalue', text: 'Yes/No' },
+  { type: 'ipv4', key: 'ip', text: 'IPv4', mask: '255.255.255.0' },
+  { type: 'object', key: 'objectlist', text: 'Elements Object',
+    fields: [
+      { type: 'string', key: 'subobject', text: 'SubObject' }
+    ]
+  },
+  { type: 'array', key: 'elementslist', text: 'Elements Array List',
+    fields: [
+      { type: 'string', key: 'item', text: 'Item' }
+    ]
+  }
+];
+
+const data = {
+  'mytext': 'Lorem ipsum',
+  'othertext': 'This is a sample',
+  'dynamic': 'String',
+  'floatnumber': 12.34,
+  'booleanvalue': true
+};
+
+const e = (id) => document.getElementById(id);
+e('json_schema').value = JSON.stringify(schema, null, 2);
+e('json_data').value = JSON.stringify(data, null, 2);
+
+let form;
+function json_create() {
+  let schema, data;
+  try {
+    schema = JSON.parse(document.getElementById('json_schema').value);
+  } catch (err) {
+    alert(`JSON Schema error ${err}`);
+  }
+  try {
+    data = JSON.parse(document.getElementById('json_data').value);
+  } catch (err) {
+    alert(`JSON Data error ${err}`);
+  }
+
+  // Functions are wrapped with "<- ... ->" to prevent missing functions when using JSON.stringify, not necessary in real source code
+  const unwrap = s => s.replace(/^<-\s*|\s*->$/g, '').trim();
+  schema.forEach(f => {
+    if (f.depends_on?.set) {
+      Object.keys(f.depends_on.set).forEach(k => {
+        if (typeof f.depends_on.set[k] === 'string' && f.depends_on.set[k].includes('<-'))
+          f.depends_on.set[k] = new Function('value', `return (${unwrap(f.depends_on.set[k])})(value);`);
+      });
+    }
+  });
+
+  form = new JuNeDynamicJSONEditor(schema, 'editor');
+  form.build();
+  form.populate(data);
+  json_update();
+}
+
+function json_update() {
+  e('json_output').innerHTML = JSON.stringify(form.collect(), null, 4);
+}
+
+json_create();
+</script>
+
+</body>
+</html>
