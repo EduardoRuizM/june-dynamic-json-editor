@@ -8,7 +8,6 @@ A dynamic, schema-driven JSON editor that builds interactive forms on the fly, v
 JuNe Dynamic JSON Editor is a lightweight, framework-agnostic JavaScript editor that generates editable forms from a JSON definition.
 It supports dynamic properties, arrays, nested objects, custom field types, live validation, and conditional behavior between fields - all without requiring a strict JSON Schema implementation.
 
-Settings → Pages → branch main → / (root)
 ### [👉Try it out: Live Demo](https://EduardoRuizM.github.io/june-dynamic-json-editor/demo.html "👉Try it out: Live Demo")
 
 ![Snapshot](snapshot.webp "Snapshot")
