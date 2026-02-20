@@ -217,7 +217,7 @@ class JuNeDynamicJSONEditor {
 	if (f.type === 'bool') el.checked = !!data[f.key];
 	else el.value = data[f.key] ?? '';
       } else if (f.type === 'object') {
-	const det = container.querySelector(':scope > details');
+	const det = container.querySelector(`#${prefix}_${f.key}`);
 	if (det && data[f.key]) this.populateFields(f.fields, det, `${prefix}_${f.key}`, data[f.key]);
       } else if (f.type === 'array') {
 	const det = container.querySelector(':scope > details');
