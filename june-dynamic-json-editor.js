@@ -18,8 +18,8 @@ class JuNeDynamicJSONEditor {
   }
 
   // --- INPUT GENERATOR ---
-  makeInput(prefix, field, id, value = null, container = null) {
-    let el, attrs = `id="${id}"`, dynamic = `data-dyjsed-key="${field.key}" data-dyjsed-prefix="${prefix}"`;
+  makeInput(field, id, value = null, container = null) {
+    let el, attrs = `id="${id}"`;
     if (field.attrs) {
       for(const a in field.attrs) {
 	if (field.attrs[a] !== null) attrs += ` ${a}="${field.attrs[a]}"`;
@@ -28,9 +28,10 @@ class JuNeDynamicJSONEditor {
     if (!['fixed', 'bool', 'enum'].includes(field.type)) attrs += ' style="display: block"';
 
     if (field.type === 'enum') {
-      el = `<select ${attrs}${dynamic} data-dyjsed-dep="1">`;
+      el = `<select ${attrs} data-dyjsed-dep="1">`;
       field.values.forEach(v => el += `<option value="${v}"${(v === value) ? ' selected' : ''}>${v}</option>`);
-    } else if (field.depends_on) attrs += ` ${dynamic} data-dyjsed-depends="${field.depends_on.key}"`;
+      el += '</select>';
+    }
 
     if (field.type === 'fixed') el = `<span><b>${field.value}</b></span><input ${attrs} type="hidden" value="${field.value || ''}">`;
     if (field.type === 'bool') el = `<div><input ${attrs} type="checkbox" ${(value) ? ' checked' : ''}><label for="${id}">${field.text}</label></div>`;
@@ -118,7 +119,7 @@ class JuNeDynamicJSONEditor {
     fields.forEach(f => {
       const li = document.createElement('li');
       li.id = `${prefix}__${f.key}_cnt`;
-      if (!['object', 'array'].includes(f.type)) this.makeInput(prefix, f, `${prefix}__${f.key}`, null, li);
+      if (!['object', 'array'].includes(f.type)) this.makeInput(f, `${prefix}__${f.key}`, null, li);
       else if (f.type === 'object') {
 	const det = document.createElement('details');
 	det.id = `${prefix}__${f.key}`;
@@ -153,7 +154,7 @@ class JuNeDynamicJSONEditor {
     const div = document.createElement('div');
     div.id = `${prefix}__${f.key}__${idx}`;
 
-    if (f.fields.length === 1 && !('key' in f.fields[0])) div.insertAdjacentHTML('beforeend', `<span id="${id}_cnt">` + this.makeInput(prefix, f.fields[0], id) + '</span>');
+    if (f.fields.length === 1 && !('key' in f.fields[0])) div.insertAdjacentHTML('beforeend', `<span id="${id}_cnt">` + this.makeInput(f.fields[0], id) + '</span>');
     else this.buildTree(f.fields, div, `${prefix}__${f.key}__${idx}`);
 
     const del = document.createElement('button');
@@ -248,32 +249,23 @@ class JuNeDynamicJSONEditor {
     });
   }
 
-  dynamicFind(key) {
-    const parts = key.split('/');
-    let fields = this.schema, l = parts.length - 1;
-    for (let i = 0; i < l; i++) {
-      fields = fields.find(f => f.key === parts[i])?.fields;
-      if (!fields) return null;
-    }
-    return fields?.find(f => f.key === parts[l]);
-  }
-
-  dynamicName(prefix, key) {
-    const p = prefix.substring(this.prefix.length + 2).replace(/__/g, '/');
-    return p + ((p) ? '/' : '') + key;
+  dynamicChg(fields, path, prefix, value) {
+    fields.forEach(f => {
+      if (f.depends_on?.key && f.depends_on.key === path && f.depends_on?.set) {
+        Object.keys(f.depends_on.set).forEach(s => f[s] = (typeof f.depends_on.set[s] === 'function') ? f.depends_on.set[s](value) : f.depends_on.set[s]);
+        if (f.depends_on.set?.attrs) {
+	  f.attrs = { ...f.attrs };
+	  Object.keys(f.depends_on.set.attrs).forEach(s => f.attrs[s] = (typeof f.depends_on.set.attrs[s] === 'function') ? f.depends_on.set.attrs[s](value) : f.depends_on.set.attrs[s]);
+        }
+        const id = `${prefix}__${f.key}`;
+        this.el(`${id}_cnt`).innerHTML = this.makeInput(f, id, f.value || '');
+      }
+      if (f.fields) this.dynamicChg(f.fields, path, `${prefix}__${f.key}`, value);
+    });
   }
 
   dynamic(el) {
-    const key = this.dynamicName(el.dataset.dyjsedPrefix, el.dataset.dyjsedKey), value = (el.type === 'checkbox') ? el.checked : el.value;
-    this.container.querySelectorAll(`[data-dyjsed-depends="${key}"][data-dyjsed-prefix^="${this.prefix}"]`).forEach(dep => {
-      const d = this.dynamicFind(this.dynamicName(dep.dataset.dyjsedPrefix, dep.dataset.dyjsedKey));
-      if (!d || !d.depends_on?.set) return;
-      Object.keys(d.depends_on.set).forEach(s => d[s] = (typeof d.depends_on.set[s] === 'function') ? d.depends_on.set[s](value) : d.depends_on.set[s]);
-      if (d.depends_on.set?.attrs) {
-	d.attrs = { ...d.attrs };
-	Object.keys(d.depends_on.set.attrs).forEach(s => d.attrs[s] = (typeof d.depends_on.set.attrs[s] === 'function') ? d.depends_on.set.attrs[s](value) : d.depends_on.set.attrs[s]);
-      }
-      this.el(`${dep.id}_cnt`).innerHTML = this.makeInput(dep.dataset.dyjsedPrefix, d, dep.id, d.value || '');
-    });
+    const path = el.id.split('__').slice(1).join('/'), value = (el.type === 'checkbox') ? el.checked : el.value;
+    this.dynamicChg(this.schema, path, this.prefix, value);
   }
 }
