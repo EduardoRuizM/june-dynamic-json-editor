@@ -66,12 +66,12 @@ It supports dynamic properties, arrays, nested objects, custom field types, live
 | 🌍 Name | Type | Required | Description |
 | --- | --- | :---: | --- |
 | **type** | String | ✔ | Field type (see Types) |
-| **key** | String | ✔ | Identifier key for field (id) |
+| **key** | String | ✔ | Identifier key for field (id) do not use double underscore `__` |
 | **text** | String | ✔ | Text description for labels |
 | **attrs** | Object | - | INPUT/SELECT attributes: <br>**type** (String): Input Type for string fields (date, email, tel, url...)<br>**maxlength** (Number): Max string length<br>**min** (Number): Minimum value number<br>**max** (Number) Maximum value number<br>**readonly** (Bool): Readonly input field<br>(and all HTML input/select attributes)... |
 | **fields** | Array | - | Nested fields array with same structure as fields |
 | **mask** | String | - | IPv4 range check using mask |
-| **depends_on** | Object | - | Object for dynamic fields to replace field new data { key: keySourceField, set: { type: value => functionForNewType[, attrs: { inputAttribute: value => functionForNewMin } ] } } |
+| **depends_on** | Object | - | Object for dynamic fields to replace field new data { key: keySourceField, set: { type: value => functionForNewType[, attrs: { inputAttribute: value => functionForNewMin } ] } } The depends_on.key property supports slash-separated paths (e.g. "Parent/Child/Field") to reference nested fields according to their hierarchy level |
 
 # Types
 | ⚙️ Name | Input Type | Description |

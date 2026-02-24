@@ -88,6 +88,25 @@ const e = (id) => document.getElementById(id);
 e('json_schema').value = JSON.stringify(schema, null, 2);
 e('json_data').value = JSON.stringify(data, null, 2);
 
+function json_funcs(schema) {
+  const unwrap = s => s.replace(/^<-\s*|\s*->$/g, '').trim();
+  schema.forEach(f => {
+    if (f.depends_on?.set) {
+      Object.keys(f.depends_on.set).forEach(k => {
+	if (typeof f.depends_on.set[k] === 'string' && f.depends_on.set[k].includes('<-'))
+ 	  f.depends_on.set[k] = new Function('value', `return (${unwrap(f.depends_on.set[k])})(value);`);
+      });
+    }
+    if (f.depends_on?.set?.attrs) {
+      Object.keys(f.depends_on.set.attrs).forEach(k => {
+	if (typeof f.depends_on.set.attrs[k] === 'string' && f.depends_on.set.attrs[k].includes('<-'))
+ 	  f.depends_on.set.attrs[k] = new Function('value', `return (${unwrap(f.depends_on.set.attrs[k])})(value);`);
+      });
+    }
+    if (Array.isArray(f.fields)) json_funcs(f.fields);
+  });
+}
+
 let form;
 function json_create() {
   let schema, data;
@@ -103,15 +122,7 @@ function json_create() {
   }
 
   // Functions are wrapped with "<- ... ->" to prevent missing functions when using JSON.stringify, not necessary in real source code
-  const unwrap = s => s.replace(/^<-\s*|\s*->$/g, '').trim();
-  schema.forEach(f => {
-    if (f.depends_on?.set) {
-      Object.keys(f.depends_on.set).forEach(k => {
-        if (typeof f.depends_on.set[k] === 'string' && f.depends_on.set[k].includes('<-'))
-          f.depends_on.set[k] = new Function('value', `return (${unwrap(f.depends_on.set[k])})(value);`);
-      });
-    }
-  });
+  json_funcs(schema);
 
   form = new JuNeDynamicJSONEditor(schema, 'editor');
   form.build();
