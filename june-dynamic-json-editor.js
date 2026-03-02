@@ -33,7 +33,7 @@ class JuNeDynamicJSONEditor {
       el += '</select>';
     }
 
-    if (field.type === 'fixed') el = `<span><b>${field.value}</b></span><input ${attrs} type="hidden" value="${field.value || ''}">`;
+    if (field.type === 'fixed') el = `<span><b>${field.value}</b></span><input type="hidden" ${attrs} value="${field.value || ''}">`;
     if (field.type === 'bool') el = `<div><input ${attrs} type="checkbox" ${(value) ? ' checked' : ''}><label for="${id}">${field.text}</label></div>`;
 
     if (!el) {
@@ -119,7 +119,7 @@ class JuNeDynamicJSONEditor {
     fields.forEach(f => {
       const li = document.createElement('li');
       li.id = `${prefix}__${f.key}_cnt`;
-      if (!['object', 'array'].includes(f.type)) this.makeInput(f, `${prefix}__${f.key}`, null, li);
+      if (!['object', 'array'].includes(f.type)) this.makeInput(f, `${prefix}__${f.key}`, f.value, li);
       else if (f.type === 'object') {
 	const det = document.createElement('details');
 	det.id = `${prefix}__${f.key}`;
@@ -251,16 +251,16 @@ class JuNeDynamicJSONEditor {
 
   dynamicChg(fields, path, prefix, value) {
     fields.forEach(f => {
-      if (f.depends_on?.key && f.depends_on.key === path && f.depends_on?.set) {
-        Object.keys(f.depends_on.set).forEach(s => f[s] = (typeof f.depends_on.set[s] === 'function') ? f.depends_on.set[s](value) : f.depends_on.set[s]);
-        if (f.depends_on.set?.attrs) {
+      const id = `${prefix}__${f.key}`;
+      if (f.depends_on?.key && f.depends_on?.set && [].concat(f.depends_on.key).includes(path)) {
+	Object.keys(f.depends_on.set).forEach(s => f[s] = (typeof f.depends_on.set[s] === 'function') ? f.depends_on.set[s](value) : f.depends_on.set[s]);
+	if (f.depends_on.set?.attrs) {
 	  f.attrs = { ...f.attrs };
 	  Object.keys(f.depends_on.set.attrs).forEach(s => f.attrs[s] = (typeof f.depends_on.set.attrs[s] === 'function') ? f.depends_on.set.attrs[s](value) : f.depends_on.set.attrs[s]);
-        }
-        const id = `${prefix}__${f.key}`;
-        this.el(`${id}_cnt`).innerHTML = this.makeInput(f, id, f.value || '');
+	}
+	this.el(`${id}_cnt`).innerHTML = this.makeInput(f, id, f.value || '');
       }
-      if (f.fields) this.dynamicChg(f.fields, path, `${prefix}__${f.key}`, value);
+      if (f.fields) this.dynamicChg(f.fields, path, id, value);
     });
   }
 

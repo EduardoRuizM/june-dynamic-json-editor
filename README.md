@@ -71,7 +71,7 @@ It supports dynamic properties, arrays, nested objects, custom field types, live
 | **attrs** | Object | - | INPUT/SELECT attributes: <br>**type** (String): Input Type for string fields (date, email, tel, url...)<br>**maxlength** (Number): Max string length<br>**min** (Number): Minimum value number<br>**max** (Number) Maximum value number<br>**readonly** (Bool): Readonly input field<br>(and all HTML input/select attributes)... |
 | **fields** | Array | - | Nested fields array with same structure as fields |
 | **mask** | String | - | IPv4 range check using mask |
-| **depends_on** | Object | - | Object for dynamic fields to replace field new data { key: keySourceField, set: { type: value => functionForNewType[, attrs: { inputAttribute: value => functionForNewMin } ] } } The depends_on.key property supports slash-separated paths (e.g. "Parent/Child/Field") to reference nested fields according to their hierarchy level |
+| **depends_on** | Object | - | Object for dynamic fields to replace field new data { key: keySourceField, set: { type: value => functionForNewType[, attrs: { inputAttribute: value => functionForNewMin } ] } } The depends_on.key property supports slash-separated paths (e.g. "ParentKey/ChildKey") to reference nested fields according to their hierarchy level |
 
 # Types
 | ⚙️ Name | Input Type | Description |
@@ -92,6 +92,7 @@ The type and attributes of a field can be conditioned based on the value of anot
 { type: 'string', key: 'dynamicfield', text: 'Dynamic Field',
     depends_on: {
 		// Key of the source field that will modify the properties
+		// Supports hierarchical paths (e.g., "ParentKey/ChildKey") or multiple keys as an array [key1, key2, ...]
 		key: 'dynamic',
 		// Set of properties to modify; you can use fixed values or functions that receive the key's value when it changes
 		set: {
