@@ -28,7 +28,7 @@ class JuNeDynamicJSONEditor {
     if (!['fixed', 'bool', 'enum'].includes(field.type)) attrs += ' style="display: block"';
 
     if (field.type === 'enum') {
-      el = `<select ${attrs} data-dyjsed-dep="1">`;
+      el = `<select ${attrs}>`;
       field.values.forEach(v => el += `<option value="${v}"${(v === value) ? ' selected' : ''}>${v}</option>`);
       el += '</select>';
     }
@@ -109,7 +109,8 @@ class JuNeDynamicJSONEditor {
   build() {
     this.container.innerHTML = '';
     this.buildTree(this.schema, this.container, this.prefix);
-    this.dynamicListener();
+    this._dynamicHandlers = {};
+    this.dynamicListener(this.schema);
   }
 
   buildTree(fields, container, prefix) {
@@ -242,10 +243,18 @@ class JuNeDynamicJSONEditor {
     this.container.querySelectorAll('details').forEach(d => d.open = open);
   }
 
-  dynamicListener() {
-    this.container.querySelectorAll('[data-dyjsed-dep]').forEach(el => {
-      el.removeAttribute('data-dyjsed-dep');
-      el.addEventListener('change', () => this.dynamic(el))
+  dynamicListener(fields) {
+    fields.forEach(f => {
+      if (f.depends_on?.key) {
+	[].concat(f.depends_on.key).forEach(k => {
+	  if (!(k in this._dynamicHandlers)) {
+	    this._dynamicHandlers[k] = 1;
+	    const el = this.el(`${this.prefix}__${k.replace(/\//g, '__')}`);
+	    el.addEventListener((el.tagName === 'SELECT') ? 'change' : 'input', () => this.dynamic(el));
+	  }
+	});
+      }
+      if (f.fields) this.dynamicListener(f.fields);
     });
   }
 
